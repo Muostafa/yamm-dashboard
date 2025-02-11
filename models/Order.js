@@ -10,7 +10,6 @@ const OrderSchema = new mongoose.Schema({
   active: { type: Boolean, default: true },
   decision: {
     type: String,
-    enum: ["reject", "accept", "escalate", null],
     default: null,
   },
   items: {
@@ -22,7 +21,7 @@ const OrderSchema = new mongoose.Schema({
         quantity: Number,
       },
     ],
-    default: [], // Ensures it doesn't default to undefined
+    default: [],
   },
 });
 
