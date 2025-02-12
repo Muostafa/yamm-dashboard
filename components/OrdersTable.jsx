@@ -56,7 +56,11 @@ export default function OrdersTable() {
         </a>
       ),
     },
-    { key: "amount", label: "Amount", render: (amount) => `$${amount}` },
+    {
+      key: "amount",
+      label: "Amount",
+      render: (amount) => `$${amount.toFixed(2)}`,
+    },
     { key: "items", label: "Items", render: (_, order) => order.items.length },
     {
       key: "decision",

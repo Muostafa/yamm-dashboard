@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useOrders } from "@/context/OrdersContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DataTable from "@/components/DataTable";
 import { Input } from "@/components/ui/input";
@@ -11,17 +10,73 @@ import { toast } from "react-hot-toast";
 export default function ItemsTables() {
   const { id } = useParams();
   const router = useRouter();
-  const { orders, addItemToOrder, deleteItemFromOrder } = useOrders();
   const [order, setOrder] = useState(null);
   const [newItem, setNewItem] = useState({ name: "", price: "", quantity: "" });
 
   useEffect(() => {
-    const foundOrder = orders.find((o) => o.id == id);
-    if (foundOrder) setOrder(foundOrder);
-  }, [id, orders]);
+    const fetchOrder = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/orders/${id}`);
+        if (!response.ok) throw new Error("Failed to fetch order");
+        const data = await response.json();
+        setOrder(data);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    };
+    fetchOrder();
+  }, [id]);
 
   if (!order)
     return <p className="text-center text-gray-500">Loading order...</p>;
+
+  const handleAddItem = async () => {
+    if (!newItem.name || newItem.price <= 0 || newItem.quantity <= 0) {
+      toast.error("All fields must be filled correctly.");
+      return;
+    }
+
+    const updatedItems = [
+      ...order.items,
+      {
+        id: `I${Date.now()}`,
+        ...newItem,
+        price: parseFloat(newItem.price),
+        quantity: parseInt(newItem.quantity, 10),
+      },
+    ];
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/orders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...order, items: updatedItems }),
+      });
+      if (!response.ok) throw new Error("Failed to update order");
+      setOrder((prev) => ({ ...prev, items: updatedItems }));
+      setNewItem({ name: "", price: "", quantity: "" });
+      toast.success("Item added successfully!");
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    const updatedItems = order.items.filter((item) => item.id !== itemId);
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/orders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...order, items: updatedItems }),
+      });
+      if (!response.ok) throw new Error("Failed to delete item");
+      setOrder((prev) => ({ ...prev, items: updatedItems }));
+      toast.success("Item deleted successfully!");
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
 
   const columns = [
     { key: "name", label: "Item Name" },
@@ -32,7 +87,7 @@ export default function ItemsTables() {
       label: "Actions",
       render: (_, item) => (
         <Button
-          onClick={() => deleteItemFromOrder(order.id, item.id)}
+          onClick={() => handleDeleteItem(item.id)}
           className="bg-red-500 text-white"
         >
           Delete
@@ -40,22 +95,6 @@ export default function ItemsTables() {
       ),
     },
   ];
-
-  const handleAddItem = async () => {
-    if (!newItem.name || newItem.price <= 0 || newItem.quantity <= 0) {
-      toast.error("All fields must be filled correctly.");
-      return;
-    }
-
-    await addItemToOrder(order.id, {
-      id: `I${Date.now()}`,
-      ...newItem,
-      price: parseFloat(newItem.price),
-      quantity: parseInt(newItem.quantity, 10),
-    });
-
-    setNewItem({ name: "", price: "", quantity: "" });
-  };
 
   return (
     <div className="p-4 space-y-6">
