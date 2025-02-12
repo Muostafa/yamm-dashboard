@@ -29,7 +29,7 @@ export const OrdersProvider = ({ children }) => {
           setPage(page);
           resolve();
         } catch (err) {
-          setError(err.message);
+          console.error(err);
           reject(err);
         } finally {
           setLoading(false);
