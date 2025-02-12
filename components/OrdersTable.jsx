@@ -4,6 +4,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import DataTable from "@/components/DataTable";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 export default function OrdersTable() {
   const {
@@ -18,6 +20,7 @@ export default function OrdersTable() {
     setPage,
   } = useOrders();
   const router = useRouter();
+  const [inputPage, setInputPage] = useState(page);
 
   const toggleActive = (order) =>
     updateOrder(order.id, { active: !order.active });
@@ -29,6 +32,7 @@ export default function OrdersTable() {
     if (page > 1) {
       setPage(page - 1);
       fetchOrders(page - 1);
+      setInputPage(page - 1);
     }
   };
 
@@ -36,6 +40,25 @@ export default function OrdersTable() {
     if (page * perPage < total) {
       setPage(page + 1);
       fetchOrders(page + 1);
+      setInputPage(page + 1);
+    }
+  };
+
+  const handlePageChange = (e) => {
+    const newPage = Number(e.target.value);
+    if (
+      !isNaN(newPage) &&
+      newPage >= 1 &&
+      newPage <= Math.ceil(total / perPage)
+    ) {
+      setInputPage(newPage);
+    }
+  };
+
+  const handleGoToPage = () => {
+    if (inputPage !== page) {
+      setPage(inputPage);
+      fetchOrders(inputPage);
     }
   };
 
@@ -113,7 +136,7 @@ export default function OrdersTable() {
       {error && <p className="text-red-500">{error}</p>}
 
       {/* Pagination Controls */}
-      <div className="flex justify-between mt-4">
+      <div className="flex items-center justify-between mt-4">
         <Button
           onClick={handlePreviousPage}
           disabled={page === 1 || loading}
@@ -121,9 +144,23 @@ export default function OrdersTable() {
         >
           Previous
         </Button>
-        <span>
-          Page {page} of {Math.ceil(total / perPage)}
-        </span>
+
+        <div className="flex items-center space-x-2">
+          <span>Page</span>
+          <Input
+            type="number"
+            value={inputPage}
+            onChange={handlePageChange}
+            className="w-16 text-center"
+            min="1"
+            max={Math.ceil(total / perPage)}
+          />
+          <span>of {Math.ceil(total / perPage)}</span>
+          <Button onClick={handleGoToPage} disabled={loading} variant="outline">
+            Go
+          </Button>
+        </div>
+
         <Button
           onClick={handleNextPage}
           disabled={page * perPage >= total || loading}
