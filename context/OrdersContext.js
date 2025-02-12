@@ -15,7 +15,6 @@ export const OrdersProvider = ({ children }) => {
   // Fetch orders with pagination
   const fetchOrders = async (page = 1) => {
     setLoading(true);
-
     await toast.promise(
       new Promise(async (resolve, reject) => {
         try {
@@ -24,6 +23,7 @@ export const OrdersProvider = ({ children }) => {
           );
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
+
           setOrders(data.orders);
           setTotal(data.total);
           setPage(page);
@@ -43,7 +43,7 @@ export const OrdersProvider = ({ children }) => {
     );
   };
 
-  // Update an order (active status, decision)
+  // Update an order
   const updateOrder = async (id, updatedData) => {
     await toast.promise(
       new Promise(async (resolve, reject) => {
@@ -56,7 +56,6 @@ export const OrdersProvider = ({ children }) => {
           const updatedOrder = await res.json();
           if (!res.ok) throw new Error(updatedOrder.error);
 
-          // Update state immediately
           setOrders((prevOrders) =>
             prevOrders.map((order) => (order.id === id ? updatedOrder : order))
           );
@@ -74,6 +73,7 @@ export const OrdersProvider = ({ children }) => {
     );
   };
 
+  // Add an item to an order
   const addItemToOrder = async (id, newItem) => {
     const order = orders.find((o) => o.id == id);
     if (!order) return toast.error("Order not found");
@@ -81,6 +81,21 @@ export const OrdersProvider = ({ children }) => {
     const updatedItems = [...order.items, newItem];
 
     await updateOrder(id, { ...order, items: updatedItems });
+  };
+
+  // Delete an item from an order
+  const deleteItemFromOrder = async (orderId, itemId) => {
+    const order = orders.find((o) => o.id == orderId);
+    if (!order) return toast.error("Order not found");
+
+    const updatedItems = order.items.filter((item) => item.id !== itemId);
+
+    await updateOrder(orderId, { ...order, items: updatedItems }),
+      {
+        loading: "Deleting item...",
+        success: "Item deleted successfully!",
+        error: "Failed to delete item",
+      };
   };
 
   useEffect(() => {
@@ -96,10 +111,11 @@ export const OrdersProvider = ({ children }) => {
         perPage,
         fetchOrders,
         updateOrder,
+        addItemToOrder,
+        deleteItemFromOrder, // Expose delete function
         loading,
         error,
         setPage,
-        addItemToOrder,
       }}
     >
       {children}
