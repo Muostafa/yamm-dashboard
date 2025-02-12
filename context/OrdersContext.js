@@ -74,6 +74,15 @@ export const OrdersProvider = ({ children }) => {
     );
   };
 
+  const addItemToOrder = async (id, newItem) => {
+    const order = orders.find((o) => o.id == id);
+    if (!order) return toast.error("Order not found");
+
+    const updatedItems = [...order.items, newItem];
+
+    await updateOrder(id, { ...order, items: updatedItems });
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -90,6 +99,7 @@ export const OrdersProvider = ({ children }) => {
         loading,
         error,
         setPage,
+        addItemToOrder,
       }}
     >
       {children}

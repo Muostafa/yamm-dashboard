@@ -106,7 +106,6 @@ export default function OrdersTable() {
 
       <DataTable columns={columns} data={orders} />
 
-      {loading && <p className="text-blue-500">Loading orders...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
       {/* Pagination Controls */}
