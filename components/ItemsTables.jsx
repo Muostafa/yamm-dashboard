@@ -16,7 +16,7 @@ export default function ItemsTables() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/orders/${id}`);
+        const response = await fetch(`/api/orders/${id}`);
         if (!response.ok) throw new Error("Failed to fetch order");
         const data = await response.json();
         setOrder(data);
