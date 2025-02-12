@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 export default function Home() {
   return (
     <div>
-      <Toaster position="top-right" />
+      <Toaster position="bottom-center" />
       <OrdersTable />
     </div>
   );

@@ -1,12 +1,15 @@
 "use client";
 import { useOrders } from "@/context/OrdersContext";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import DataTable from "@/components/DataTable";
 
 export default function OrdersTable() {
   const {
     orders,
-    total,
     page,
+    total,
     perPage,
     fetchOrders,
     updateOrder,
@@ -14,103 +17,117 @@ export default function OrdersTable() {
     error,
     setPage,
   } = useOrders();
+  const router = useRouter();
 
-  // Handle Active Status Toggle
-  const toggleActive = (order) => {
+  const toggleActive = (order) =>
     updateOrder(order.id, { active: !order.active });
+
+  const handleDecision = (order, decision) =>
+    updateOrder(order.id, { decision });
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+      fetchOrders(page - 1);
+    }
   };
 
-  // Handle Decision Change
-  const handleDecision = (order, decision) => {
-    updateOrder(order.id, { decision });
+  const handleNextPage = () => {
+    if (page * perPage < total) {
+      setPage(page + 1);
+      fetchOrders(page + 1);
+    }
   };
+
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "reason", label: "Reason" },
+    {
+      key: "store",
+      label: "Store",
+      render: (_, order) => (
+        <a
+          href={order.store_url}
+          className="text-blue-500"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {order.store_name}
+        </a>
+      ),
+    },
+    { key: "amount", label: "Amount", render: (amount) => `$${amount}` },
+    { key: "items", label: "Items", render: (_, order) => order.items.length },
+    {
+      key: "decision",
+      label: "Decision",
+      render: (_, order) => (
+        <select
+          value={order.decision || ""}
+          onChange={(e) => handleDecision(order, e.target.value)}
+          className="border p-1"
+          disabled={loading}
+        >
+          <option value="not yet">Not yet</option>
+          <option value="reject">Reject</option>
+          <option value="accept">Accept</option>
+          <option value="escalate">Escalate</option>
+        </select>
+      ),
+    },
+    {
+      key: "active",
+      label: "Active",
+      render: (_, order) => (
+        <Switch
+          checked={order.active}
+          onCheckedChange={() => toggleActive(order)}
+          disabled={loading}
+        />
+      ),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (_, order) => (
+        <Button
+          onClick={() => router.push(`/orders/${order.id}`)}
+          disabled={loading}
+        >
+          View {order.items.length} {order.items.length > 1 ? "Items" : "Item"}
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-4">Refund Orders</h2>
 
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">ID</th>
-            <th className="border p-2">Reason</th>
-            <th className="border p-2">Store</th>
-            <th className="border p-2">Amount</th>
-            <th className="border p-2">Items</th>
-            <th className="border p-2">Decision</th>
-            <th className="border p-2">Active</th>
-            <th className="border p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order, id) => (
-            <tr key={id} className="border">
-              <td className="border p-2">{order.id}</td>
-              <td className="border p-2">{order.reason}</td>
-              <td className="border p-2 gap-2">
-                <a
-                  href={order.store_url}
-                  className="text-blue-500"
-                  target="_blank"
-                >
-                  {order.store_name}
-                </a>
-              </td>
-              <td className="border p-2">${order.amount}</td>
-              <td className="border p-2">{order.items.length}</td>
-              <td className="border p-2">
-                <select
-                  value={order.decision || ""}
-                  onChange={(e) => handleDecision(order, e.target.value)}
-                  className="border p-1"
-                >
-                  <option value="not yet">Not yet</option>
-                  <option value="reject">Reject</option>
-                  <option value="accept">Accept</option>
-                  <option value="escalate">Escalate</option>
-                </select>
-              </td>
-              <td className="border p-2">
-                <Switch
-                  checked={order.active}
-                  onCheckedChange={() => toggleActive(order)}
-                />
-              </td>
-              <td className="border p-2">
-                <button
-                  onClick={() => (window.location.href = `/orders/${order.id}`)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded"
-                >
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable columns={columns} data={orders} />
 
-      {loading && <p>Loading...</p>}
+      {loading && <p className="text-blue-500">Loading orders...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
       {/* Pagination Controls */}
       <div className="flex justify-between mt-4">
-        <button
-          onClick={() => fetchOrders(page - 1)}
-          disabled={page === 1}
-          className="px-4 py-2 border disabled:opacity-50"
+        <Button
+          onClick={handlePreviousPage}
+          disabled={page === 1 || loading}
+          variant="outline"
         >
           Previous
-        </button>
+        </Button>
         <span>
           Page {page} of {Math.ceil(total / perPage)}
         </span>
-        <button
-          onClick={() => fetchOrders(page + 1)}
-          disabled={page * perPage >= total}
-          className="px-4 py-2 border disabled:opacity-50"
+        <Button
+          onClick={handleNextPage}
+          disabled={page * perPage >= total || loading}
+          variant="outline"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );
