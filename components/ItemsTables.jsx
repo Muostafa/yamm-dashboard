@@ -47,7 +47,7 @@ export default function ItemsTables() {
     ];
 
     try {
-      const response = await fetch(`http://localhost:3000/api/orders/${id}`, {
+      const response = await fetch(`/api/orders/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...order, items: updatedItems }),
@@ -65,7 +65,7 @@ export default function ItemsTables() {
     const updatedItems = order.items.filter((item) => item.id !== itemId);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/orders/${id}`, {
+      const response = await fetch(`/api/orders/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...order, items: updatedItems }),
